@@ -20,14 +20,33 @@
 
 <script>
 import gql from "graphql-tag"
+
+const SUBSCRIPTION_ONLINE_USERS = gql`
+  subscription getOnlineUsers {
+  online_users(order_by: {user:{name: asc}}) {
+    id,
+    user {
+      name
+    }
+  }
+}
+`
+
 export default {
   data () {
     return {
-      online_list: [
-        { user: { name: "someUser1" } },
-        { user: { name: "someUser2" } }
-      ]
+      online_list: []
     };
+  },
+  apollo: {
+    $subscribe: {
+      online_list: {
+        query: SUBSCRIPTION_ONLINE_USERS,
+        result ({ data }) {
+          this.online_list = data.online_users
+        }
+      }
+    }
   },
   mounted () {
     const UPDATE_LASTSEEN_MUTATION = gql`
@@ -39,7 +58,7 @@ export default {
     `
     setInterval(() => {
       this.$apollo.mutate({
-        muations: UPDATE_LASTSEEN_MUTATION,
+        mutation: UPDATE_LASTSEEN_MUTATION,
         variables: {
           now: new Date().toISOString()
         }
